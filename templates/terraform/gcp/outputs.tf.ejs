@@ -1,0 +1,9 @@
+output "vpc_name" {
+  description = "Name of the VPC"
+  value       = module.vpc.network_name
+}
+
+output "vpc_self_link" {
+  description = "Self link of the VPC"
+  value       = module.vpc.network_self_link
+}

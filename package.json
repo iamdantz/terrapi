@@ -1,0 +1,62 @@
+{
+  "name": "terrapi",
+  "version": "0.0.1",
+  "description": "A CLI tool for Terraform project scaffolding and management",
+  "main": "dist/index.js",
+  "bin": {
+    "terrapi": "dist/cli.js"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/cli.js",
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run clean && npm run build",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix"
+  },
+  "keywords": [
+    "cli",
+    "terraform",
+    "infrastructure",
+    "iac",
+    "aws",
+    "azure",
+    "gcp",
+    "typescript"
+  ],
+  "author": "iamdantz",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "files": [
+    "dist/**/*",
+    "templates/**/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "inquirer": "^12.8.1",
+    "ora": "^8.2.0",
+    "yargs": "^18.0.0",
+    "fs-extra": "^11.3.0",
+    "execa": "^9.6.0",
+    "ejs": "^3.1.10",
+    "update-notifier": "^7.3.1",
+    "chalk": "^5.4.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.15",
+    "@types/inquirer": "^9.0.8",
+    "@types/yargs": "^17.0.33",
+    "@types/fs-extra": "^11.0.4",
+    "@types/ejs": "^3.1.5",
+    "@types/update-notifier": "^6.0.8",
+    "@typescript-eslint/eslint-plugin": "^8.38.0",
+    "@typescript-eslint/parser": "^8.38.0",
+    "eslint": "^9.31.0",
+    "typescript": "^5.8.3"
+  }
+}
