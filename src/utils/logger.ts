@@ -35,6 +35,36 @@ export class Logger {
     console.error(chalk.red('✗'), message);
   }
 
+  plain(message: string): void {
+    console.log(message);
+  }
+
+  empty(): void {
+    console.log();
+  }
+
+  step(message: string): void {
+    console.log(chalk.dim('  ' + message));
+  }
+
+  highlight(message: string): void {
+    console.log(chalk.cyan(message));
+  }
+
+  label(labelText: string, message: string, color: string = 'cyan'): void {
+    const colorFn = chalk[color as keyof typeof chalk] as any;
+    const label = colorFn(` ${labelText} `);
+    console.log(`${label} ${message}`);
+  }
+
+  nextStep(command: string, description: string): void {
+    console.log(`  ${chalk.cyan(command)} ${chalk.dim(description)}`);
+  }
+
+  command(cmd: string): void {
+    console.log(chalk.cyan(`  ${cmd}`));
+  }
+
   debug(message: string): void {
     if (this.verbose) {
       console.log(chalk.gray('🐛'), chalk.gray(message));
