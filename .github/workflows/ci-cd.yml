@@ -1,0 +1,76 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  publish:
+    name: Publish to NPM
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-files
+          path: dist/
+
+      - name: Check version and publish
+        id: publish
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          PUBLISHED_VERSION=$(npm view terrapi version 2>/dev/null || echo "0.0.0")
+          
+          echo "current-version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "published-version=$PUBLISHED_VERSION" >> $GITHUB_OUTPUT
+          
+          if [ "$CURRENT_VERSION" != "$PUBLISHED_VERSION" ]; then
+            echo "should-publish=true" >> $GITHUB_OUTPUT
+            echo "Publishing version $CURRENT_VERSION (was $PUBLISHED_VERSION)"
+            npm publish
+          else
+            echo "should-publish=false" >> $GITHUB_OUTPUT
+            echo "Version unchanged: $CURRENT_VERSION - skipping publish"
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          
+      - name: Create GitHub Release
+        if: steps.publish.outputs.should-publish == 'true'
+        uses: elgohr/Github-Release-Action@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          title: Release v${{ steps.publish.outputs.current-version }}
+          tag: v${{ steps.publish.outputs.current-version }}
+          body: |
+            ## 🚀 terrapi v${{ steps.publish.outputs.current-version }}
+            
+            **Published to npm:** https://www.npmjs.com/package/terrapi
+
+            ### ✨ What's New
+            Check the [commit history](https://github.com/iamdantz/terrapi/commits/main) for detailed changes since the last release.
+            
+          draft: false
+          prerelease: false
