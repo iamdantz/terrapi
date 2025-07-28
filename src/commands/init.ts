@@ -1,6 +1,7 @@
 import { CommandModule, Argv } from 'yargs';
 import inquirer from 'inquirer';
 import { execa } from 'execa';
+import chalk from 'chalk';
 import { logger, Spinner, FileUtils, TemplateManager } from '../utils/index.js';
 import { InitOptions, TerraformProvider, TerraformProject } from '../types/index.js';
 import path from 'path';
@@ -53,6 +54,9 @@ export const initCommand: CommandModule<{}, InitArgs> = {
   },
   handler: async (argv: InitArgs) => {
     logger.setVerbose(argv.verbose || false);
+    logger.empty();
+    logger.label('terrapi', 'Launch sequence initiated.', 'green');
+    logger.empty();
     
     try {
       const options = await promptForMissingOptions(argv);
@@ -85,6 +89,7 @@ async function promptForMissingOptions(options: InitArgs): Promise<TerraformProj
         }
         return true;
       },
+      prefix: chalk.bgCyan.black(' dir '),
     });
   }
 
@@ -99,6 +104,7 @@ async function promptForMissingOptions(options: InitArgs): Promise<TerraformProj
         { name: '🟡 GCP (Google Cloud Platform)', value: 'gcp' },
       ],
       default: 'aws',
+      prefix: chalk.bgMagenta.black(' cloud '),
     });
   }
 
@@ -108,6 +114,7 @@ async function promptForMissingOptions(options: InitArgs): Promise<TerraformProj
       name: 'externalModules',
       message: 'Will you use external modules (instead of local modules)?',
       default: false,
+      prefix: chalk.bgYellow.black(' modules '),
     });
   }
 
@@ -117,6 +124,7 @@ async function promptForMissingOptions(options: InitArgs): Promise<TerraformProj
       name: 'gitInit',
       message: 'Initialize a new git repository?',
       default: true,
+      prefix: chalk.bgGreen.black(' git '),
     });
   }
 
@@ -183,19 +191,27 @@ async function executeInit(project: TerraformProject): Promise<void> {
     }
   }
 
-  logger.success(`\n🎉 Terraform project "${project.name}" created successfully!`);
-  logger.info(`\nNext steps:`);
-  logger.info(`cd ${path.relative(process.cwd(), project.projectPath)}`);
-  logger.info(`terraform init`);
-  logger.info(`terraform plan`);
-  
-  if (project.provider === 'aws') {
-    logger.info(`\n💡 Don't forget to configure your AWS credentials!`);
-  } else if (project.provider === 'azure') {
-    logger.info(`\n💡 Don't forget to configure your Azure credentials!`);
-  } else if (project.provider === 'gcp') {
-    logger.info(`\n💡 Don't forget to configure your GCP credentials!`);
+  logger.empty();
+  logger.success(`Project initialized!`);
+  logger.empty();
+
+  logger.plain(`  ${chalk.dim('■')} Template copied`);
+  logger.plain(`  ${chalk.dim('■')} Terraform files generated`);
+  if (project.gitInit) {
+    logger.plain(`  ${chalk.dim('■')} Git repository initialized`);
   }
+  logger.empty();
+
+  logger.label('next', `Explore your project!`, 'cyan');
+  logger.empty();
+  
+  const projectDir = path.relative(process.cwd(), project.projectPath);
+  logger.nextStep(`cd ${projectDir}`, 'Enter your project directory');
+  logger.nextStep('terraform init', 'Initialize Terraform providers and modules');
+  logger.nextStep('terraform plan', 'Preview infrastructure changes');
+  logger.empty();
+  
+  logger.plain(chalk.dim(`Stuck? Configure your ${project.provider.toUpperCase()} credentials first.`));
 }
 
 async function createProjectStructure(project: TerraformProject): Promise<void> {

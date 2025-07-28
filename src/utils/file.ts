@@ -23,7 +23,6 @@ export class FileUtils {
 
   static async writeFile(filePath: string, content: string): Promise<void> {
     try {
-      // Ensure directory exists
       await this.ensureDirectory(dirname(filePath));
       await fs.writeFile(filePath, content, 'utf-8');
     } catch (error) {
