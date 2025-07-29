@@ -1,4 +1,4 @@
-name: NPM Publish and Release
+name: NPM Publish
 
 on:
   push:
@@ -61,12 +61,4 @@ jobs:
         with:
           title: Release v${{ steps.check.outputs.version }}
           tag: v${{ steps.check.outputs.version }}
-          body: |
-            ## 🚀 terrapi v${{ steps.check.outputs.version }}
-            
-            **Published to npm:** https://www.npmjs.com/package/terrapi
-            
-            ### ✨ What's New
-            Check the [commit history](https://github.com/iamdantz/terrapi/commits/main) for detailed changes since the last release.
-          draft: false
           prerelease: false
