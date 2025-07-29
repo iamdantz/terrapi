@@ -1,6 +1,6 @@
 {
   "name": "terrapi",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A CLI tool for Terraform project scaffolding and management",
   "main": "dist/index.js",
   "bin": {
@@ -12,7 +12,8 @@
     "dev": "tsc --watch",
     "start": "node dist/cli.js",
     "clean": "rm -rf dist",
-    "prepublishOnly": "npm run clean && npm run build",
+    "prepublishOnly": "echo 'Using pre-built artifacts from CI'",
+    "prepack": "npm run clean && npm run build",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
     "version:patch": "npm version patch",
