@@ -90,10 +90,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          title: Release v${{ needs.setup-and-build.outputs.new-version }}
-          tag: v${{ needs.setup-and-build.outputs.new-version }}
+          title: Release v${{ needs.build.outputs.new-version }}
+          tag: v${{ needs.build.outputs.new-version }}
           body: |
-            ## 🚀 terrapi v${{ needs.setup-and-build.outputs.new-version }}
+                        ## 🚀 terrapi v${{ needs.build.outputs.new-version }}
             
             **Published to npm:** https://www.npmjs.com/package/terrapi
             
