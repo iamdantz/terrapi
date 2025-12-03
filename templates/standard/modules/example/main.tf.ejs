@@ -1,0 +1,21 @@
+<%_ if (provider === 'AWS') { -%>
+resource "aws_s3_bucket" "example" {
+  bucket = var.bucket_name
+
+  tags = var.tags
+}
+<%_ } else if (provider === 'Azure') { -%>
+resource "azurerm_resource_group" "example" {
+  name     = var.resource_group_name
+  location = var.location
+  tags     = var.tags
+}
+<%_ } else if (provider === 'GCP') { -%>
+resource "google_storage_bucket" "example" {
+  name          = var.bucket_name
+  location      = var.location
+  force_destroy = true
+
+  labels = var.labels
+}
+<%_ } -%>

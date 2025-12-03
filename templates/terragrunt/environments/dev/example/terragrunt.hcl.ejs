@@ -1,0 +1,31 @@
+include "root" {
+  path = find_in_parent_folders()
+}
+
+terraform {
+  source = "../../../modules/example"
+}
+
+inputs = {
+<%_ if (provider === 'AWS') { -%>
+  bucket_name = "dev-<%= projectName %>-bucket"
+  tags = {
+    Environment = "dev"
+    Project     = "<%= projectName %>"
+  }
+<%_ } else if (provider === 'Azure') { -%>
+  resource_group_name = "dev-<%= projectName %>-rg"
+  location            = "East US"
+  tags = {
+    Environment = "dev"
+    Project     = "<%= projectName %>"
+  }
+<%_ } else if (provider === 'GCP') { -%>
+  bucket_name = "dev-<%= projectName %>-bucket"
+  location    = "US"
+  labels = {
+    environment = "dev"
+    project     = "<%= projectName %>"
+  }
+<%_ } -%>
+}

@@ -1,0 +1,44 @@
+<%_ if (provider === 'AWS') { -%>
+variable "bucket_name" {
+  description = "Name of the S3 bucket"
+  type        = string
+}
+
+variable "tags" {
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default     = {}
+}
+<%_ } else if (provider === 'Azure') { -%>
+variable "resource_group_name" {
+  description = "Name of the Resource Group"
+  type        = string
+}
+
+variable "location" {
+  description = "Azure region"
+  type        = string
+}
+
+variable "tags" {
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default     = {}
+}
+<%_ } else if (provider === 'GCP') { -%>
+variable "bucket_name" {
+  description = "Name of the GCS bucket"
+  type        = string
+}
+
+variable "location" {
+  description = "GCP region"
+  type        = string
+}
+
+variable "labels" {
+  description = "Labels to apply to resources"
+  type        = map(string)
+  default     = {}
+}
+<%_ } -%>

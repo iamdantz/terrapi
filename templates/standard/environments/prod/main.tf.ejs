@@ -1,0 +1,36 @@
+provider "<%= provider === 'GCP' ? 'google' : provider.toLowerCase() %>" {
+<%_ if (provider === 'AWS') { -%>
+  region = var.region
+<%_ } else if (provider === 'Azure') { -%>
+  features {}
+<%_ } else if (provider === 'GCP') { -%>
+  project = var.project_id
+  region  = var.region
+<%_ } -%>
+}
+
+module "example" {
+  source = "../../modules/example"
+
+<%_ if (provider === 'AWS') { -%>
+  bucket_name = "${var.environment}-<%= projectName %>-bucket"
+  tags = {
+    Environment = var.environment
+    Project     = "<%= projectName %>"
+  }
+<%_ } else if (provider === 'Azure') { -%>
+  resource_group_name = "${var.environment}-<%= projectName %>-rg"
+  location            = var.location
+  tags = {
+    Environment = var.environment
+    Project     = "<%= projectName %>"
+  }
+<%_ } else if (provider === 'GCP') { -%>
+  bucket_name = "${var.environment}-<%= projectName %>-bucket"
+  location    = var.region
+  labels = {
+    environment = var.environment
+    project     = "<%= projectName %>"
+  }
+<%_ } -%>
+}

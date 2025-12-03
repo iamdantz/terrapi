@@ -1,0 +1,30 @@
+variable "environment" {
+  description = "Environment name"
+  type        = string
+  default     = "dev"
+}
+
+<%_ if (provider === 'AWS') { -%>
+variable "region" {
+  description = "AWS Region"
+  type        = string
+  default     = "us-east-1"
+}
+<%_ } else if (provider === 'Azure') { -%>
+variable "location" {
+  description = "Azure Region"
+  type        = string
+  default     = "East US"
+}
+<%_ } else if (provider === 'GCP') { -%>
+variable "project_id" {
+  description = "GCP Project ID"
+  type        = string
+}
+
+variable "region" {
+  description = "GCP Region"
+  type        = string
+  default     = "US"
+}
+<%_ } -%>

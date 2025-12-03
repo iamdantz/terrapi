@@ -1,0 +1,22 @@
+# backend.tf
+# Uncomment and configure after creating the state bucket/container
+
+# terraform {
+#   backend "<%= provider === 'AWS' ? 's3' : (provider === 'Azure' ? 'azurerm' : 'gcs') %>" {
+<% if (provider === 'AWS') { %>
+#     bucket         = "YOUR-BUCKET-NAME"
+#     key            = "environments/dev/terraform.tfstate"
+#     region         = "us-east-1"
+#     dynamodb_table = "YOUR-LOCK-TABLE"
+#     encrypt        = true
+<% } else if (provider === 'Azure') { %>
+#     resource_group_name  = "YOUR-RG-NAME"
+#     storage_account_name = "YOUR-STORAGE-ACCOUNT"
+#     container_name       = "tfstate"
+#     key                  = "environments/dev/terraform.tfstate"
+<% } else if (provider === 'GCP') { %>
+#     bucket  = "YOUR-BUCKET-NAME"
+#     prefix  = "environments/dev"
+<% } %>
+#   }
+# }

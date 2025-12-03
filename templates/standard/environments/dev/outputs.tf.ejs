@@ -1,0 +1,13 @@
+<%_ if (provider === 'AWS') { -%>
+output "bucket_arn" {
+  value = module.example.bucket_arn
+}
+<%_ } else if (provider === 'Azure') { -%>
+output "resource_group_id" {
+  value = module.example.resource_group_id
+}
+<%_ } else if (provider === 'GCP') { -%>
+output "bucket_url" {
+  value = module.example.bucket_url
+}
+<%_ } -%>

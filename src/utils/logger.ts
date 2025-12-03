@@ -1,141 +1,36 @@
 import chalk from 'chalk';
-import ora, { Ora } from 'ora';
-import { LogLevel, SpinnerOptions } from '../types/index.js';
+import ora from 'ora';
+import boxen from 'boxen';
 
 export class Logger {
-  private static instance: Logger;
-  private verbose: boolean = false;
-
-  private constructor() {}
-
-  static getInstance(): Logger {
-    if (!Logger.instance) {
-      Logger.instance = new Logger();
-    }
-    return Logger.instance;
+  static info(message: string) {
+    console.log(chalk.blue('ℹ '), message);
   }
 
-  setVerbose(verbose: boolean): void {
-    this.verbose = verbose;
+  static success(message: string) {
+    console.log(chalk.green('✔ '), message);
   }
 
-  info(message: string): void {
-    console.log(chalk.blue('ℹ'), message);
+  static error(message: string) {
+    console.error(chalk.red('✖ '), message);
   }
 
-  success(message: string): void {
-    console.log(chalk.green('✓'), message);
+  static warn(message: string) {
+    console.warn(chalk.yellow('⚠ '), message);
   }
 
-  warn(message: string): void {
-    console.log(chalk.yellow('⚠'), message);
+  static title(message: string) {
+    console.log(
+      boxen(chalk.cyan.bold(message), {
+        padding: 1,
+        margin: 1,
+        borderStyle: 'round',
+        borderColor: 'cyan',
+      })
+    );
   }
 
-  error(message: string): void {
-    console.error(chalk.red('✗'), message);
-  }
-
-  plain(message: string): void {
-    console.log(message);
-  }
-
-  empty(): void {
-    console.log();
-  }
-
-  step(message: string): void {
-    console.log(chalk.dim('  ' + message));
-  }
-
-  highlight(message: string): void {
-    console.log(chalk.cyan(message));
-  }
-
-  label(labelText: string, message: string, color: string = 'cyan'): void {
-    const colorFn = chalk[color as keyof typeof chalk] as any;
-    const label = colorFn(` ${labelText} `);
-    console.log(`${label} ${message}`);
-  }
-
-  nextStep(command: string, description: string): void {
-    console.log(`  ${chalk.cyan(command)} ${chalk.dim(description)}`);
-  }
-
-  command(cmd: string): void {
-    console.log(chalk.cyan(`  ${cmd}`));
-  }
-
-  debug(message: string): void {
-    if (this.verbose) {
-      console.log(chalk.gray('🐛'), chalk.gray(message));
-    }
-  }
-
-  log(level: LogLevel, message: string): void {
-    switch (level) {
-      case 'info':
-        this.info(message);
-        break;
-      case 'success':
-        this.success(message);
-        break;
-      case 'warn':
-        this.warn(message);
-        break;
-      case 'error':
-        this.error(message);
-        break;
-      case 'debug':
-        this.debug(message);
-        break;
-    }
+  static spinner(message: string) {
+    return ora(message);
   }
 }
-
-export class Spinner {
-  private spinner: Ora;
-
-  constructor(options: SpinnerOptions) {
-    this.spinner = ora({
-      text: options.text,
-      color: options.color || 'cyan',
-    });
-  }
-
-  start(): this {
-    this.spinner.start();
-    return this;
-  }
-
-  stop(): this {
-    this.spinner.stop();
-    return this;
-  }
-
-  succeed(text?: string): this {
-    this.spinner.succeed(text);
-    return this;
-  }
-
-  fail(text?: string): this {
-    this.spinner.fail(text);
-    return this;
-  }
-
-  warn(text?: string): this {
-    this.spinner.warn(text);
-    return this;
-  }
-
-  info(text?: string): this {
-    this.spinner.info(text);
-    return this;
-  }
-
-  setText(text: string): this {
-    this.spinner.text = text;
-    return this;
-  }
-}
-
-export const logger = Logger.getInstance();

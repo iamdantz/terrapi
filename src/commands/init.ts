@@ -1,266 +1,92 @@
-import { CommandModule, Argv } from 'yargs';
-import inquirer from 'inquirer';
-import { execa } from 'execa';
+import { input, select } from '@inquirer/prompts';
+import { TemplateManager } from '../core/TemplateManager';
+import { StandardGenerator } from '../generators/StandardGenerator';
+import { TerragruntGenerator } from '../generators/TerragruntGenerator';
+import { Logger } from '../utils/logger';
 import chalk from 'chalk';
-import { logger, Spinner, FileUtils, TemplateManager } from '../utils/index.js';
-import { InitOptions, TerraformProvider, TerraformProject } from '../types/index.js';
-import path from 'path';
+import boxen from 'boxen';
 
-interface InitArgs extends InitOptions {
-  name?: string;
-  provider?: TerraformProvider;
-  'external-modules'?: boolean;
-  'git-init'?: boolean;
-  externalModules?: boolean;
-  gitInit?: boolean;
-  path?: string;
-}
-
-export const initCommand: CommandModule<{}, InitArgs> = {
-  command: 'init [name]',
-  describe: 'Initialize a new Terraform project',
-  builder: (yargs: Argv) => {
-    return yargs
-      .positional('name', {
-        describe: 'Project name or path',
-        type: 'string',
-      })
-      .option('provider', {
-        alias: 'p',
-        describe: 'Cloud provider',
-        type: 'string',
-        choices: ['aws', 'azure', 'gcp'] as const,
-      })
-      .option('external-modules', {
-        describe: 'Use external modules instead of local modules',
-        type: 'boolean',
-      })
-      .option('git-init', {
-        describe: 'Initialize a new git repository',
-        type: 'boolean',
-      })
-      .option('force', {
-        alias: 'f',
-        describe: 'Force overwrite existing directory',
-        type: 'boolean',
-        default: false,
-      })
-      .option('verbose', {
-        alias: 'v',
-        describe: 'Enable verbose logging',
-        type: 'boolean',
-        default: false,
-      }) as Argv<InitArgs>;
-  },
-  handler: async (argv: InitArgs) => {
-    logger.setVerbose(argv.verbose || false);
-    logger.empty();
-    logger.label('terrapi', 'Launch sequence initiated.', 'green');
-    logger.empty();
-    
-    try {
-      const options = await promptForMissingOptions(argv);
-      await executeInit(options);
-    } catch (error) {
-      if (error instanceof Error) {
-        logger.error(`Initialization failed: ${error.message}`);
-      } else {
-        logger.error('Initialization failed with unknown error');
-      }
-      process.exit(1);
-    }
-  },
-};
-
-async function promptForMissingOptions(options: InitArgs): Promise<TerraformProject> {
-  const questions: Array<any> = [];
-
-  logger.debug(`Received options: ${JSON.stringify(options, null, 2)}`);
-
-  if (!options.name) {
-    questions.push({
-      type: 'input',
-      name: 'name',
-      message: 'What is your project name or path?',
-      default: 'terraform-project',
-      validate: (input: string) => {
-        if (!input.trim()) {
-          return 'Project name is required';
-        }
-        return true;
-      },
-      prefix: chalk.bgCyan.black(' dir '),
-    });
-  }
-
-  if (!options.provider) {
-    questions.push({
-      type: 'list',
-      name: 'provider',
-      message: 'Which cloud provider will you use?',
-      choices: [
-        { name: '🟠 AWS (Amazon Web Services)', value: 'aws' },
-        { name: '🔵 Azure (Microsoft Azure)', value: 'azure' },
-        { name: '🟡 GCP (Google Cloud Platform)', value: 'gcp' },
-      ],
-      default: 'aws',
-      prefix: chalk.bgMagenta.black(' cloud '),
-    });
-  }
-
-  if (options.externalModules === undefined) {
-    questions.push({
-      type: 'confirm',
-      name: 'externalModules',
-      message: 'Will you use external modules (instead of local modules)?',
-      default: false,
-      prefix: chalk.bgYellow.black(' modules '),
-    });
-  }
-
-  if (options.gitInit === undefined) {
-    questions.push({
-      type: 'confirm',
-      name: 'gitInit',
-      message: 'Initialize a new git repository?',
-      default: true,
-      prefix: chalk.bgGreen.black(' git '),
-    });
-  }
-
-  const answers = await inquirer.prompt(questions);
+export async function initCommand() {
+  console.clear();
   
-  const projectName = options.name || answers.name;
-  const isPath = projectName.includes('/') || projectName.includes('\\');
-  
-  return {
-    name: isPath ? path.basename(projectName) : projectName,
-    provider: (options.provider || answers.provider) as TerraformProvider,
-    externalModules: options.externalModules ?? answers.externalModules ?? false,
-    gitInit: options.gitInit ?? answers.gitInit ?? true,
-    projectPath: isPath ? path.resolve(projectName) : path.resolve(process.cwd(), projectName),
-  };
-}
-
-async function executeInit(project: TerraformProject): Promise<void> {
-  logger.debug(`Project name: ${project.name}`);
-  logger.debug(`Project path: ${project.projectPath}`);
-  logger.debug(`Provider: ${project.provider}`);
-  logger.debug(`External modules: ${project.externalModules}`);
-  logger.debug(`Git init: ${project.gitInit}`);
-
-  if (await FileUtils.exists(project.projectPath)) {
-    logger.error(`Directory already exists: ${project.projectPath}`);
-    logger.info('Use --force to overwrite existing directory');
-    process.exit(1);
-  }
-
-  const structureSpinner = new Spinner({ text: 'Creating project structure...' });
-  structureSpinner.start();
-  
-  try {
-    await createProjectStructure(project);
-    structureSpinner.succeed('Project structure created');
-  } catch (error) {
-    structureSpinner.fail('Failed to create project structure');
-    throw error;
-  }
-
-  const filesSpinner = new Spinner({ text: 'Generating Terraform files...' });
-  filesSpinner.start();
-  
-  try {
-    await generateTerraformFiles(project);
-    filesSpinner.succeed('Terraform files generated');
-  } catch (error) {
-    filesSpinner.fail('Failed to generate Terraform files');
-    throw error;
-  }
-
-  if (project.gitInit) {
-    const gitSpinner = new Spinner({ text: 'Initializing git repository...' });
-    gitSpinner.start();
-    
-    try {
-      await execa('git', ['init'], { cwd: project.projectPath });
-      await createGitignore(project.projectPath);
-      gitSpinner.succeed('Git repository initialized');
-    } catch (error) {
-      gitSpinner.fail('Failed to initialize git repository');
-      logger.warn('You can initialize git manually by running: git init');
-    }
-  }
-
-  logger.empty();
-  logger.success(`Project initialized!`);
-  logger.empty();
-
-  logger.plain(`  ${chalk.dim('■')} Template copied`);
-  logger.plain(`  ${chalk.dim('■')} Terraform files generated`);
-  if (project.gitInit) {
-    logger.plain(`  ${chalk.dim('■')} Git repository initialized`);
-  }
-  logger.empty();
-
-  logger.label('next', `Explore your project!`, 'cyan');
-  logger.empty();
-  
-  const projectDir = path.relative(process.cwd(), project.projectPath);
-  logger.nextStep(`cd ${projectDir}`, 'Enter your project directory');
-  logger.nextStep('terraform init', 'Initialize Terraform providers and modules');
-  logger.nextStep('terraform plan', 'Preview infrastructure changes');
-  logger.empty();
-  
-  logger.plain(chalk.dim(`Stuck? Configure your ${project.provider.toUpperCase()} credentials first.`));
-}
-
-async function createProjectStructure(project: TerraformProject): Promise<void> {
-  await FileUtils.ensureDirectory(project.projectPath);
-  await FileUtils.ensureDirectory(FileUtils.join(project.projectPath, 'config'));
-  
-  if (!project.externalModules) {
-    await FileUtils.ensureDirectory(FileUtils.join(project.projectPath, 'modules'));
-
-    const templateManager = new TemplateManager();
-    const moduleName = templateManager.getDefaultModuleName(project.provider);
-    const modulePath = FileUtils.join(project.projectPath, 'modules', moduleName);
-    await FileUtils.ensureDirectory(modulePath);
-  }
-}
-
-async function generateTerraformFiles(project: TerraformProject): Promise<void> {
-  const templateManager = new TemplateManager();
-  const templateData = {
-    projectName: project.name,
-    provider: project.provider,
-    externalModules: project.externalModules,
-  };
-
-  await templateManager.generateRootFiles(project.projectPath, project.provider, templateData);
-  
-  await templateManager.generateConfigFiles(project.projectPath, project.provider, templateData);
-
-  if (!project.externalModules) {
-    const moduleName = templateManager.getDefaultModuleName(project.provider);
-    await generateModuleFiles(project, templateManager, moduleName, templateData);
-  }
-}
-
-async function generateModuleFiles(
-  project: TerraformProject,
-  templateManager: TemplateManager,
-  moduleName: string,
-  templateData: Record<string, unknown>
-): Promise<void> {
-  await templateManager.generateModuleFiles(
-    project.projectPath,
-    project.provider,
-    moduleName,
-    templateData
+  console.log(
+    boxen(chalk.cyan.bold('Terrapi CLI') + '\n' + chalk.dim('Infrastructure as Code Scaffolding'), {
+      padding: 1,
+      margin: 1,
+      borderStyle: 'round',
+      borderColor: 'cyan',
+      textAlignment: 'center'
+    })
   );
-}
 
-async function createGitignore(projectPath: string): Promise<void> {
-  const templateManager = new TemplateManager();
-  await templateManager.generateGitignore(projectPath);
+  Logger.info(chalk.bold('Welcome! Let\'s set up your new Terraform project.\n'));
+
+  const projectName = await input({
+    message: 'Project Name:',
+    default: 'my-terraform-project',
+    validate: (value) => value.trim().length > 0 || 'Project name cannot be empty',
+  });
+
+  const provider = await select({
+    message: 'Cloud Provider:',
+    choices: [
+      { name: 'AWS', value: 'AWS' },
+      { name: 'Azure', value: 'Azure' },
+      { name: 'Google Cloud Platform (GCP)', value: 'GCP' },
+      { name: 'Other', value: 'Other' },
+    ],
+  });
+
+  const template = await select({
+    message: 'Architecture Template:',
+    choices: [
+      {
+        name: 'Standard',
+        value: 'standard',
+        description: 'Modules + Environment Wrappers. Best for most projects.',
+      },
+      {
+        name: 'Terragrunt',
+        value: 'terragrunt',
+        description: 'DRY + Auto-Backend. Best for large scale/multi-team.',
+      },
+    ],
+  });
+
+  let generator;
+
+  if (template === 'standard') {
+    generator = new StandardGenerator();
+  } else {
+    generator = new TerragruntGenerator();
+  }
+
+  const manager = new TemplateManager(generator);
+  await manager.execute(projectName, provider);
+
+  const nextSteps = [];
+  nextSteps.push(chalk.bold('To get started:'));
+  nextSteps.push('');
+  nextSteps.push(`  ${chalk.cyan('cd')} ${projectName}`);
+  
+  if (template === 'standard') {
+    nextSteps.push(`  ${chalk.cyan('cd')} environments/dev`);
+    nextSteps.push(`  ${chalk.cyan('terraform')} init`);
+    nextSteps.push(`  ${chalk.cyan('terraform')} plan`);
+  } else {
+    nextSteps.push(`  ${chalk.cyan('cd')} environments/dev/example`);
+    nextSteps.push(`  ${chalk.cyan('terragrunt')} init`);
+    nextSteps.push(`  ${chalk.cyan('terragrunt')} plan`);
+  }
+
+  console.log(
+    boxen(nextSteps.join('\n'), {
+      padding: 1,
+      margin: 1,
+      borderStyle: 'round',
+      borderColor: 'green',
+      title: 'Next Steps',
+      titleAlignment: 'center'
+    })
+  );
 }
