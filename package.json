@@ -27,7 +27,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@inquirer/prompts": "^3.3.0",
+    "@inquirer/prompts": "^8.0.2",
     "boxen": "^5.1.2",
     "chalk": "^4.1.2",
     "commander": "^11.1.0",
