@@ -1,5 +1,4 @@
 import fs from 'fs-extra';
-import path from 'path';
 import ejs from 'ejs';
 import { Logger } from './logger';
 
@@ -13,11 +12,7 @@ export class FileSystem {
     }
   }
 
-  static async renderTemplate(
-    templatePath: string,
-    destPath: string,
-    data: any
-  ) {
+  static async renderTemplate(templatePath: string, destPath: string, data: any) {
     try {
       const template = await fs.readFile(templatePath, 'utf-8');
       const content = ejs.render(template, data);
@@ -31,8 +26,8 @@ export class FileSystem {
   static async ensureDir(dirPath: string) {
     await fs.ensureDir(dirPath);
   }
-  
+
   static async pathExists(pathToCheck: string): Promise<boolean> {
-      return await fs.pathExists(pathToCheck);
+    return await fs.pathExists(pathToCheck);
   }
 }

@@ -26,7 +26,7 @@ export class Logger {
         margin: 1,
         borderStyle: 'round',
         borderColor: 'cyan',
-      })
+      }),
     );
   }
 

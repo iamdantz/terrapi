@@ -8,18 +8,18 @@ import boxen from 'boxen';
 
 export async function initCommand() {
   console.clear();
-  
+
   console.log(
     boxen(chalk.cyan.bold('Terrapi CLI') + '\n' + chalk.dim('Infrastructure as Code Scaffolding'), {
       padding: 1,
       margin: 1,
       borderStyle: 'round',
       borderColor: 'cyan',
-      textAlignment: 'center'
-    })
+      textAlignment: 'center',
+    }),
   );
 
-  Logger.info(chalk.bold('Welcome! Let\'s set up your new Terraform project.\n'));
+  Logger.info(chalk.bold("Welcome! Let's set up your new Terraform project.\n"));
 
   const projectName = await input({
     message: 'Project Name:',
@@ -68,7 +68,7 @@ export async function initCommand() {
   nextSteps.push(chalk.bold('To get started:'));
   nextSteps.push('');
   nextSteps.push(`  ${chalk.cyan('cd')} ${projectName}`);
-  
+
   if (template === 'standard') {
     nextSteps.push(`  ${chalk.cyan('cd')} environments/dev`);
     nextSteps.push(`  ${chalk.cyan('terraform')} init`);
@@ -86,7 +86,7 @@ export async function initCommand() {
       borderStyle: 'round',
       borderColor: 'green',
       title: 'Next Steps',
-      titleAlignment: 'center'
-    })
+      titleAlignment: 'center',
+    }),
   );
 }
